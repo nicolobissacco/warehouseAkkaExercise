@@ -8,7 +8,7 @@ class WarehouseTest extends FunSuite {
   def warehouseForTest(warehouseId: String, products: List[String] = List.empty[String]): Warehouse = Warehouse(warehouseId, products)
 
   // CREATE WAREHOUSE
-  test("Create warehouse with non empty state and another id") {
+  /*test("Create warehouse with non empty state and another id") {
     val warehouse = warehouseForTest("test")
     val id = "random"
     val action: Either[String, Option[Warehouse.WarehouseEvt]] =
@@ -17,7 +17,7 @@ class WarehouseTest extends FunSuite {
     val event = action.right.get.get
     val applyResult = event.applyTo(warehouse)
     assert(applyResult.warehouseId != id)
-  }
+  }*/
 
   /*test("Create warehouse with non empty state and wrong id") {
     val warehouse = warehouseForTest("test")

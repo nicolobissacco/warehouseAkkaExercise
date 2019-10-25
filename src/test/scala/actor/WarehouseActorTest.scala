@@ -79,7 +79,7 @@ class WarehouseActorTest
     }
   }
 
-  "A create command" must {
+  /*"A create command" must {
     "create another warehouse if the id is different" in {
       cluster ! Warehouse.Create("test")
       expectMsg(10 seconds, Done)
@@ -87,7 +87,7 @@ class WarehouseActorTest
       cluster ! Warehouse.Create("test2")
       expectMsg(10 seconds, Done)
     }
-  }
+  }*/
 
   /*"A create command" must {
     "generate an error if try to create another warehouse on the same actor" in {

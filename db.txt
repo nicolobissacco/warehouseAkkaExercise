@@ -14,3 +14,8 @@ AddedProduct(testId,prod1) 510ffc40-f72a-11e9-b624-abd0c1bcc78f
 AddedProduct(testId,prod2) 54ac0ec0-f72a-11e9-b624-abd0c1bcc78f
 Created(testId2) 5b315e80-f72a-11e9-b624-abd0c1bcc78f
 RemovedProduct(testId,prod1) 6a427c60-f72a-11e9-b624-abd0c1bcc78f
+Created(test) 84287bc0-f72f-11e9-b51a-e9435a127f49
+AddedProduct(test,prod1) 84287bc0-f72f-11e9-b51a-e9435a127f49
+AddedProduct(test,prod2) 84287bc0-f72f-11e9-b51a-e9435a127f49
+RemovedProduct(test,prod2) 84287bc0-f72f-11e9-b51a-e9435a127f49
+Created(test) 84287bc0-f72f-11e9-b51a-e9435a127f49
