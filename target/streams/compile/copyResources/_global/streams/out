@@ -1,0 +1,4 @@
+[0m[[0m[0mdebug[0m] [0m[0mCopy resource mappings: [0m
+[0m[[0m[0mdebug[0m] [0m[0m	(/Users/nicolo.bissacco/Desktop/magazzino/src/main/resources/logback.xml,/Users/nicolo.bissacco/Desktop/magazzino/target/scala-2.13/classes/logback.xml)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	(/Users/nicolo.bissacco/Desktop/magazzino/src/main/resources/application.conf,/Users/nicolo.bissacco/Desktop/magazzino/target/scala-2.13/classes/application.conf)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	(/Users/nicolo.bissacco/Desktop/magazzino/src/main/resources/scalapb.sbt,/Users/nicolo.bissacco/Desktop/magazzino/target/scala-2.13/classes/scalapb.sbt)[0m
