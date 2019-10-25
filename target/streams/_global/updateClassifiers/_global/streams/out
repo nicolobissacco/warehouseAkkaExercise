@@ -1,4 +1,4 @@
 [debug] "not up to date. inChanged = true, force = false
-[debug] Updating ProjectRef(uri("file:/Users/nicolo.bissacco/Desktop/magazzino/"), "magazzino")...
-[debug] Done updating ProjectRef(uri("file:/Users/nicolo.bissacco/Desktop/magazzino/"), "magazzino")
+[debug] Updating ProjectRef(uri("file:/Users/nicolo.bissacco/warehouseAkkaExercise/"), "warehouseakkaexercise")...
+[debug] Done updating ProjectRef(uri("file:/Users/nicolo.bissacco/warehouseAkkaExercise/"), "warehouseakkaexercise")
 [warn] There may be incompatibilities among your library dependencies; run 'evicted' to see detailed eviction warnings.
