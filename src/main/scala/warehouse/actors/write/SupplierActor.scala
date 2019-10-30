@@ -3,14 +3,12 @@ package warehouse.actors.write
 import akka.Done
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, ReceiveTimeout}
 import akka.cluster.sharding.ShardRegion
-import akka.pattern.{ask, pipe}
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 import akka.util.Timeout
 import warehouse.AppConfig
-import warehouse.domain.Supplier.{SupplierCmd, SupplierEvt}
+import warehouse.domain.Supplier.{ObtainedSupplier, SupplierCmd, SupplierEvt}
 import warehouse.domain.{Supplier, Warehouse}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class SupplierActor extends Actor with PersistentActor with ActorSharding with ActorLogging {
@@ -45,10 +43,13 @@ class SupplierActor extends Actor with PersistentActor with ActorSharding with A
   override def receiveCommand: Receive = {
     case cmd: SupplierCmd =>
       cmd.applyTo(state) match {
-        case Right(Some(event@Supplier.Created(_, warehouseId))) =>
+        /*case Right(Some(event@Supplier.Created(_, warehouseId))) =>
           context.become(afterWarehouseCheck(sender, event))
           val future = warehouseRegion ? Warehouse.GetWarehouse(warehouseId)
-          future pipeTo self
+          future pipeTo self*/
+        case Right(Some(event: ObtainedSupplier)) =>
+          println("SU RECEIVE CMD ObtainedSupplier", cmd, state)
+          sender() ! event.applyTo(state)
         case Right(Some(event)) =>
           persistEvent(event)
         case Right(None) => sender() ! Done
