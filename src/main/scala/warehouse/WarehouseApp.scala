@@ -73,7 +73,7 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
   private def createClusterShardingActors(): Unit = {
     ClusterSharding(system).start(
       typeName = WarehouseActor.actorName,
-      entityProps = WarehouseActor.props,
+      entityProps = WarehouseActor.props(),
       settings = ClusterShardingSettings(system),
       extractEntityId = WarehouseActor.extractEntityId,
       extractShardId = WarehouseActor.extractShardId
@@ -92,11 +92,6 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
   }
 
   def routes: Route = concat(
-    path("ping") {
-      get {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>PING!!!</h1>"))
-      }
-    },
     path("createWarehouse") {
       post {
         entity(as[Warehouse.Create])(forwardRequest)

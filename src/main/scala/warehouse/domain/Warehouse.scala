@@ -23,11 +23,11 @@ object Warehouse {
 
   case class Create(warehouseId: String) extends WarehouseCmd {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
+      println("DOMAINNNNN", domainEntity.warehouseId, warehouseId)
       domainEntity match {
         case Warehouse.emptyWarehouse => Right(Some(Created(warehouseId)))
         case _ if domainEntity.warehouseId == warehouseId => Right(None)
-        case _ => Right(Some(Created(warehouseId)))
-        //case _ => Left("Warehouse creation error: actor already init")
+        case _ => Left("Warehouse creation error: actor already init")
       }
     }
   }

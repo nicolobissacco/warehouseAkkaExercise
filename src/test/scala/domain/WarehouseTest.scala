@@ -7,26 +7,14 @@ class WarehouseTest extends FunSuite {
 
   def warehouseForTest(warehouseId: String, products: List[String] = List.empty[String]): Warehouse = Warehouse(warehouseId, products)
 
-  // CREATE WAREHOUSE
-  /*test("Create warehouse with non empty state and another id") {
-    val warehouse = warehouseForTest("test")
-    val id = "random"
-    val action: Either[String, Option[Warehouse.WarehouseEvt]] =
-      Warehouse.Create(id).applyTo(warehouse)
-    assert(action.isRight)
-    val event = action.right.get.get
-    val applyResult = event.applyTo(warehouse)
-    assert(applyResult.warehouseId != id)
-  }*/
-
-  /*test("Create warehouse with non empty state and wrong id") {
+  test("Create warehouse with non empty state and wrong id") {
     val warehouse = warehouseForTest("test")
     val id = "random"
     val action: Either[String, Option[Warehouse.WarehouseEvt]] =
       Warehouse.Create(id).applyTo(warehouse)
     assert(action.isLeft)
     assert(action.left.get equals "Warehouse creation error: actor already init")
-  }*/
+  }
 
   test("Create warehouse with non empty state and same id") {
     val id = "test"

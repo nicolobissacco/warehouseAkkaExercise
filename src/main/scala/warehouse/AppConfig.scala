@@ -28,4 +28,7 @@ object AppConfig {
 
   val dbFilePath = "db.txt"
   val offsetFilePath = "offset.txt"
+
+  val dbFilePathTest = "dbTest.txt"
+  val offsetFilePathTest = "offsetTest.txt"
 }

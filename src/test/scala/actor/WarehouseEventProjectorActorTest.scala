@@ -24,8 +24,8 @@ class WarehouseEventProjectorActorTest
     with BeforeAndAfterAll
     with Inside {
 
-  val dbFilePath = AppConfig.dbFilePath
-  val offsetFilePath = AppConfig.offsetFilePath
+  val dbFilePath = AppConfig.dbFilePathTest
+  val offsetFilePath = AppConfig.offsetFilePathTest
   val projector = system.actorOf(
     ClusterSingletonManager.props(
       singletonProps = WarehouseEventProjectorActor.props(new WarehouseLogExporter(dbFilePath, offsetFilePath)),

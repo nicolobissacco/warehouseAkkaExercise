@@ -1,18 +1,21 @@
 package warehouse.actors.write
 
 import akka.Done
-import akka.actor.{Actor, ActorSystem, Props, ReceiveTimeout}
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props, ReceiveTimeout}
 import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
+import akka.util.Timeout
+import warehouse.AppConfig
 import warehouse.domain.Warehouse
 import warehouse.domain.Warehouse.WarehouseCmd
 
 import scala.concurrent.duration._
 
-class WarehouseActor extends Actor with PersistentActor with ActorSharding {
+class WarehouseActor extends Actor with PersistentActor with ActorSharding with ActorLogging {
   override implicit val system: ActorSystem = context.system
+  private implicit val timeout: Timeout = Timeout(AppConfig.askTimeout)
 
-  override def persistenceId: String = s"${WarehouseActor.actorName}"
+  override def persistenceId: String = s"${WarehouseActor.actorName}-${self.path.name}"
 
   var state: Warehouse = Warehouse.emptyWarehouse
 
@@ -65,10 +68,13 @@ object WarehouseActor {
   val actorName = "warehouse-writer-actor"
   val detailsTag: String = "warehouseTag"
 
-  def props: Props = Props(new WarehouseActor())
+  def props(): Props = Props(new WarehouseActor())
 
   val extractEntityId: ShardRegion.ExtractEntityId = {
-    case m: WarehouseCmd => (m.warehouseId, m)
+    case m: WarehouseCmd => {
+      println(">>>extractEntityId", m.warehouseId)
+      (m.warehouseId, m)
+    }
   }
 
   val extractShardId: ShardRegion.ExtractShardId = {
