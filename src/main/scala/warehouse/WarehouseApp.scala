@@ -6,7 +6,7 @@ import akka.cluster.Cluster
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings}
 import akka.dispatch.MessageDispatcher
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{HttpApp, Route}
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
@@ -14,11 +14,13 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import warehouse.actors.projector.WarehouseEventProjectorActor
-import warehouse.actors.projector.export.WarehouseLogExporter
-import warehouse.actors.write.{ActorSharding, WarehouseActor}
-import warehouse.domain.Warehouse
+import warehouse.WarehouseApp.path
+import warehouse.actors.projector.export.{SupplierLogExporter, WarehouseLogExporter}
+import warehouse.actors.projector.{SupplierEventProjectorActor, WarehouseEventProjectorActor}
+import warehouse.actors.write.{ActorSharding, SupplierActor, WarehouseActor}
+import warehouse.domain.Supplier.SupplierCmd
 import warehouse.domain.Warehouse.WarehouseCmd
+import warehouse.domain.{Supplier, Warehouse}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -78,6 +80,14 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
       extractEntityId = WarehouseActor.extractEntityId,
       extractShardId = WarehouseActor.extractShardId
     )
+
+    ClusterSharding(system).start(
+      typeName = SupplierActor.actorName,
+      entityProps = SupplierActor.props(),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = SupplierActor.extractEntityId,
+      extractShardId = SupplierActor.extractShardId
+    )
   }
 
   private def createClusterSingletonActors(): Unit = {
@@ -89,31 +99,62 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
       ),
       WarehouseEventProjectorActor.name
     )
+
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = SupplierEventProjectorActor.props(new SupplierLogExporter(dbFilePath, offsetFilePath)),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      SupplierEventProjectorActor.name
+    )
   }
 
   def routes: Route = concat(
     path("createWarehouse") {
       post {
-        entity(as[Warehouse.Create])(forwardRequest)
+        entity(as[Warehouse.Create])(warehouseRequest)
       }
     },
     path("addProduct") {
       post {
-        entity(as[Warehouse.AddProduct])(forwardRequest)
+        entity(as[Warehouse.AddProduct])(warehouseRequest)
       }
     },
     path("removeProduct") {
       post {
-        entity(as[Warehouse.RemoveProduct])(forwardRequest)
+        entity(as[Warehouse.RemoveProduct])(warehouseRequest)
+      }
+    },
+    path("getWarehouse") {
+      post {
+        entity(as[Warehouse.GetWarehouse])(warehouseRequest)
+      }
+    },
+
+    path("createSupplier") {
+      post {
+        entity(as[Supplier.Create])(supplierRequest)
+      }
+    },
+    path("getSupplier") {
+      post {
+        entity(as[Supplier.GetSupplier])(supplierRequest)
       }
     }
   )
 
-  def forwardRequest[R <: WarehouseCmd]: R => Route =
-    (request: R) => {
-      onSuccess(warehouseRegion ? request) {
-        case Done => complete(StatusCodes.OK -> s"$request")
-        case e => complete(StatusCodes.BadRequest -> e.toString)
-      }
+  def warehouseRequest[R <: WarehouseCmd]: R => Route = (request: R) => {
+    onSuccess(warehouseRegion ? request) {
+      case Done => complete(StatusCodes.OK -> s"$request")
+      case e => complete(StatusCodes.BadRequest -> e.toString)
     }
+  }
+
+  def supplierRequest[R <: SupplierCmd]: R => Route = (request: R) => {
+    onSuccess(supplierRegion ? request) {
+      case Done => complete(StatusCodes.OK -> s"$request")
+      case e => complete(StatusCodes.BadRequest -> e.toString)
+    }
+  }
 }

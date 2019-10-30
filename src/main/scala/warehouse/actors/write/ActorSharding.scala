@@ -8,4 +8,6 @@ trait ActorSharding {
   implicit val system: ActorSystem
 
   def warehouseRegion: ActorRef = ClusterSharding(system).shardRegion(WarehouseActor.actorName)
+
+  def supplierRegion: ActorRef = ClusterSharding(system).shardRegion(SupplierActor.actorName)
 }

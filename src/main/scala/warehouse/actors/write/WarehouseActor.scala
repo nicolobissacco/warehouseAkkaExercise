@@ -7,7 +7,7 @@ import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 import akka.util.Timeout
 import warehouse.AppConfig
 import warehouse.domain.Warehouse
-import warehouse.domain.Warehouse.WarehouseCmd
+import warehouse.domain.Warehouse.{ObtainedWarehouse, WarehouseCmd}
 
 import scala.concurrent.duration._
 
@@ -34,9 +34,8 @@ class WarehouseActor extends Actor with PersistentActor with ActorSharding with 
     case RecoveryCompleted => println("Recovery completed!")
     case event: Warehouse.WarehouseEvt =>
       state = update(state, event)
-      println("EVT", event, state)
+      println("WA RECOVER EVT", event, state)
     case SnapshotOffer(_, snapshot: Warehouse) =>
-      println("SNAPSHOTOFFER")
       state = snapshot
     case unknown => println(s"Unknown message in receiveRecover: $unknown")
   }
@@ -44,14 +43,16 @@ class WarehouseActor extends Actor with PersistentActor with ActorSharding with 
   override def receiveCommand: Receive = {
     case cmd: Warehouse.WarehouseCmd =>
       cmd.applyTo(state) match {
+        case Right(Some(event: ObtainedWarehouse)) =>
+          println("WA RECEIVE CMD ObtainedWarehouse", cmd, state)
+          sender() ! event.applyTo(state)
         case Right(Some(event)) =>
           persist(event) { _ =>
             state = update(state, event)
             if (lastSequenceNr != 0 && lastSequenceNr % snapShotInterval == 0) {
               saveSnapshot(state)
-              println("SNAPSHOT")
             }
-            println("CMD", cmd, state)
+            println("WA PERSIST CMD", cmd, state)
             sender() ! Done
           }
         case Right(None) => sender() ! Done
@@ -72,7 +73,7 @@ object WarehouseActor {
 
   val extractEntityId: ShardRegion.ExtractEntityId = {
     case m: WarehouseCmd => {
-      println(">>>extractEntityId", m.warehouseId)
+      println("WA extractEntityId", m.warehouseId)
       (m.warehouseId, m)
     }
   }

@@ -1,8 +1,8 @@
 package warehouse.domain
 
-import warehouse.domain.Domain.{DomainCommand, DomainEntity, DomainEvent}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
+import warehouse.domain.Domain.{DomainCommand, DomainEntity, DomainEvent}
 
 case class Warehouse(warehouseId: String, products: List[String]) extends DomainEntity
 
@@ -23,7 +23,7 @@ object Warehouse {
 
   case class Create(warehouseId: String) extends WarehouseCmd {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
-      println("DOMAINNNNN", domainEntity.warehouseId, warehouseId)
+      println("WA CMD create applyTo", domainEntity.warehouseId, warehouseId)
       domainEntity match {
         case Warehouse.emptyWarehouse => Right(Some(Created(warehouseId)))
         case _ if domainEntity.warehouseId == warehouseId => Right(None)
@@ -34,6 +34,7 @@ object Warehouse {
 
   case class Created(warehouseId: String) extends WarehouseEvt {
     override def applyTo(domainEntity: Warehouse): Warehouse = {
+      println("WA EVT Created applyTo", domainEntity.warehouseId, warehouseId)
       domainEntity.copy(warehouseId = warehouseId)
     }
   }
@@ -43,6 +44,7 @@ object Warehouse {
 
   case class AddProduct(warehouseId: String, product: String) extends WarehouseCmd {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
+      println("WA CMD AddProduct applyTo", domainEntity.warehouseId, warehouseId)
       if (warehouseId == domainEntity.warehouseId) {
         Right(Some(AddedProduct(warehouseId, product)))
       } else {
@@ -53,6 +55,7 @@ object Warehouse {
 
   case class AddedProduct(warehouseId: String, product: String) extends WarehouseEvt {
     override def applyTo(domainEntity: Warehouse): Warehouse = {
+      println("WA EVT AddedProduct applyTo", domainEntity.warehouseId, warehouseId)
       domainEntity.copy(products = domainEntity.products :+ product)
     }
   }
@@ -62,6 +65,7 @@ object Warehouse {
 
   case class RemoveProduct(warehouseId: String, product: String) extends WarehouseCmd {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
+      println("WA CMD RemoveProduct applyTo", domainEntity.warehouseId, warehouseId)
       if (warehouseId == domainEntity.warehouseId) {
         if (domainEntity.products.contains(product)) {
           Right(Option(RemovedProduct(warehouseId, product)))
@@ -77,7 +81,28 @@ object Warehouse {
 
   case class RemovedProduct(warehouseId: String, product: String) extends WarehouseEvt {
     override def applyTo(domainEntity: Warehouse): Warehouse = {
+      println("WA EVT RemovedProduct applyTo", domainEntity.warehouseId, warehouseId)
       domainEntity.copy(products = domainEntity.products.filter(_ != product))
+    }
+  }
+
+  implicit val dGetWarehouse: Decoder[GetWarehouse] = deriveDecoder[GetWarehouse]
+  implicit val eGetWarehouse: Encoder[GetWarehouse] = deriveEncoder[GetWarehouse]
+
+  case class GetWarehouse(warehouseId: String) extends WarehouseCmd {
+    override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
+      println("WA CMD GetWarehouse applyTo", domainEntity.warehouseId, warehouseId)
+      domainEntity match {
+        case _ if domainEntity.warehouseId == warehouseId => Right(Some(ObtainedWarehouse(warehouseId)))
+        case _ => Left("Warehouse get error: not found")
+      }
+    }
+  }
+
+  case class ObtainedWarehouse(warehouseId: String) extends WarehouseEvt {
+    override def applyTo(domainEntity: Warehouse): Warehouse = {
+      println("WA EVT ObtainedWarehouse applyTo", domainEntity.warehouseId, warehouseId)
+      domainEntity
     }
   }
 

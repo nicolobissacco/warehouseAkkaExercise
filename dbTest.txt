@@ -1,5 +1,0 @@
-Created(test) 01053b90-fb01-11e9-85b3-e9435a127f49
-AddedProduct(test,prod1) 01053b90-fb01-11e9-85b3-e9435a127f49
-AddedProduct(test,prod2) 01053b90-fb01-11e9-85b3-e9435a127f49
-RemovedProduct(test,prod2) 01053b90-fb01-11e9-85b3-e9435a127f49
-Created(test) 01053b90-fb01-11e9-85b3-e9435a127f49
