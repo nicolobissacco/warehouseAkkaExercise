@@ -10,4 +10,6 @@ trait ActorSharding {
   def warehouseRegion: ActorRef = ClusterSharding(system).shardRegion(WarehouseActor.actorName)
 
   def supplierRegion: ActorRef = ClusterSharding(system).shardRegion(SupplierActor.actorName)
+
+  def customerRegion: ActorRef = ClusterSharding(system).shardRegion(CustomerActor.actorName)
 }

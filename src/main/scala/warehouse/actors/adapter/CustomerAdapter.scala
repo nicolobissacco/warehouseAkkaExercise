@@ -1,19 +1,19 @@
 package warehouse.actors.adapter
 
 import akka.persistence.journal.{EventAdapter, EventSeq, Tagged}
-import warehouse.actors.write.SupplierActor
-import warehouse.domain.Supplier
+import warehouse.actors.write.CustomerActor
+import warehouse.domain.Customer
 
-class SupplierAdapter extends EventAdapter {
+class CustomerAdapter extends EventAdapter {
   override def manifest(event: Any): String = event.getClass.getSimpleName
 
-  val tag = Set(SupplierActor.detailsTag)
+  val tag = Set(CustomerActor.detailsTag)
 
   override def fromJournal(event: Any, manifest: String): EventSeq = event match {
-    case event: Supplier.Created => EventSeq(event)
+    case event: Customer.Created => EventSeq(event)
   }
 
   override def toJournal(event: Any): Any = event match {
-    case event: Supplier.Created => Tagged(event, tag)
+    case event: Customer.Created => Tagged(event, tag)
   }
 }

@@ -14,13 +14,13 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import warehouse.WarehouseApp.path
-import warehouse.actors.projector.export.{SupplierLogExporter, WarehouseLogExporter}
-import warehouse.actors.projector.{SupplierEventProjectorActor, WarehouseEventProjectorActor}
-import warehouse.actors.write.{ActorSharding, SupplierActor, WarehouseActor}
+import warehouse.actors.projector.export.{CustomerLogExporter, SupplierLogExporter, WarehouseLogExporter}
+import warehouse.actors.projector.{CustomerEventProjectorActor, SupplierEventProjectorActor, WarehouseEventProjectorActor}
+import warehouse.actors.write.{ActorSharding, CustomerActor, SupplierActor, WarehouseActor}
+import warehouse.domain.Customer.CustomerCmd
 import warehouse.domain.Supplier.SupplierCmd
 import warehouse.domain.Warehouse.WarehouseCmd
-import warehouse.domain.{Supplier, Warehouse}
+import warehouse.domain.{Customer, Supplier, Warehouse}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -88,6 +88,14 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
       extractEntityId = SupplierActor.extractEntityId,
       extractShardId = SupplierActor.extractShardId
     )
+
+    ClusterSharding(system).start(
+      typeName = CustomerActor.actorName,
+      entityProps = CustomerActor.props(),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = CustomerActor.extractEntityId,
+      extractShardId = CustomerActor.extractShardId
+    )
   }
 
   private def createClusterSingletonActors(): Unit = {
@@ -108,22 +116,21 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
       ),
       SupplierEventProjectorActor.name
     )
+
+    system.actorOf(
+      ClusterSingletonManager.props(
+        singletonProps = CustomerEventProjectorActor.props(new CustomerLogExporter(dbFilePath, offsetFilePath)),
+        terminationMessage = PoisonPill,
+        settings = ClusterSingletonManagerSettings(system)
+      ),
+      CustomerEventProjectorActor.name
+    )
   }
 
   def routes: Route = concat(
     path("createWarehouse") {
       post {
         entity(as[Warehouse.Create])(warehouseRequest)
-      }
-    },
-    path("addProduct") {
-      post {
-        entity(as[Warehouse.AddProduct])(warehouseRequest)
-      }
-    },
-    path("removeProduct") {
-      post {
-        entity(as[Warehouse.RemoveProduct])(warehouseRequest)
       }
     },
     path("getWarehouse") {
@@ -137,9 +144,30 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
         entity(as[Supplier.Create])(supplierRequest)
       }
     },
+    /*path("addProduct") {
+      post {
+        entity(as[Warehouse.AddProduct])(warehouseRequest)
+      }
+    },*/
     path("getSupplier") {
       post {
         entity(as[Supplier.GetSupplier])(supplierRequest)
+      }
+    },
+
+    path("createCustomer") {
+      post {
+        entity(as[Customer.Create])(customerRequest)
+      }
+    },
+    /*path("removeProduct") {
+      post {
+        entity(as[Warehouse.RemoveProduct])(warehouseRequest)
+      }
+    },*/
+    path("getCustomer") {
+      post {
+        entity(as[Customer.GetCustomer])(customerRequest)
       }
     }
   )
@@ -153,6 +181,13 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
 
   def supplierRequest[R <: SupplierCmd]: R => Route = (request: R) => {
     onSuccess(supplierRegion ? request) {
+      case Done => complete(StatusCodes.OK -> s"$request")
+      case e => complete(StatusCodes.BadRequest -> e.toString)
+    }
+  }
+
+  def customerRequest[R <: CustomerCmd]: R => Route = (request: R) => {
+    onSuccess(customerRegion ? request) {
       case Done => complete(StatusCodes.OK -> s"$request")
       case e => complete(StatusCodes.BadRequest -> e.toString)
     }

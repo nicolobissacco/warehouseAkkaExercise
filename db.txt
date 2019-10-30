@@ -1,9 +1,6 @@
-Created(sup1,eu) 09d6d860-fb19-11e9-a083-175766c3926d
-Created(eu) 3106bfa0-fb1d-11e9-8eb8-a3ae355f94fd
-AddedProduct(eu,prod1) 720d0f80-fb1e-11e9-9cb2-f11746969836
-AddedProduct(eu,prod1) 72de6940-fb1e-11e9-9cb2-f11746969836
-Created(eu) f087ce90-fb23-11e9-804b-41eae654aeb7
-Created(eu) de7b8730-fb25-11e9-8c5e-2948a7f56e18
-Created(sup1,eu) 9bddc710-fb27-11e9-b4f8-1fbfdda087bd
-Created(eu) ec5d8900-fb27-11e9-adcf-4f915c0de903
-Created(sup1,eu) ef8d1e10-fb27-11e9-adcf-4f915c0de903
+Created(cust1) 3119be80-fb35-11e9-9661-0d1d79ecd44b
+Created(cust2) 3a951cc0-fb35-11e9-9661-0d1d79ecd44b
+Created(eu) 088ae6b0-fb35-11e9-9661-0d1d79ecd44b
+Created(ru) 136deb40-fb35-11e9-9661-0d1d79ecd44b
+Created(sup1) 21056176-fb35-11e9-9661-0d1d79ecd44b
+Created(sup2) 26859d40-fb35-11e9-9661-0d1d79ecd44b

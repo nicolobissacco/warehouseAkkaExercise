@@ -23,7 +23,7 @@ object Customer {
 
   case class Create(customerId: String) extends CustomerCmd {
     override def applyTo(domainEntity: Customer): Either[String, Option[CustomerEvt]] = {
-      println("SU CMD Create applyTo", domainEntity.customerId, customerId)
+      println("CU CMD Create applyTo", domainEntity.customerId, customerId)
       domainEntity match {
         case Customer.emptyCustomer => Right(Some(Created(customerId)))
         case _ if domainEntity.customerId == customerId => Right(None)
@@ -34,7 +34,7 @@ object Customer {
 
   case class Created(customerId: String) extends CustomerEvt {
     override def applyTo(domainEntity: Customer): Customer = {
-      println("SU EVT Created applyTo", domainEntity.customerId, customerId)
+      println("CU EVT Created applyTo", domainEntity.customerId, customerId)
       domainEntity.copy(customerId = customerId)
     }
   }
@@ -44,7 +44,7 @@ object Customer {
 
   case class GetCustomer(customerId: String) extends CustomerCmd {
     override def applyTo(domainEntity: Customer): Either[String, Option[CustomerEvt]] = {
-      println("SU CMD GetCustomer applyTo", domainEntity.customerId, customerId)
+      println("CU CMD GetCustomer applyTo", domainEntity.customerId, customerId)
       domainEntity match {
         case _ if domainEntity.customerId == customerId => Right(Some(ObtainedCustomer(customerId)))
         case _ => Left("Customer get error: not found")
@@ -54,7 +54,7 @@ object Customer {
 
   case class ObtainedCustomer(customerId: String) extends CustomerEvt {
     override def applyTo(domainEntity: Customer): Customer = {
-      println("SU EVT ObtainedCustomer applyTo", domainEntity.customerId, customerId)
+      println("CU EVT ObtainedCustomer applyTo", domainEntity.customerId, customerId)
       domainEntity
     }
   }
