@@ -1,6 +1,0 @@
-Created(cust1) 3119be80-fb35-11e9-9661-0d1d79ecd44b
-Created(cust2) 3a951cc0-fb35-11e9-9661-0d1d79ecd44b
-Created(eu) 088ae6b0-fb35-11e9-9661-0d1d79ecd44b
-Created(ru) 136deb40-fb35-11e9-9661-0d1d79ecd44b
-Created(sup1) 21056176-fb35-11e9-9661-0d1d79ecd44b
-Created(sup2) 26859d40-fb35-11e9-9661-0d1d79ecd44b
