@@ -6,8 +6,8 @@ import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 import akka.util.Timeout
 import warehouse.AppConfig
+import warehouse.domain.Supplier
 import warehouse.domain.Supplier.{ObtainedSupplier, SupplierCmd, SupplierEvt}
-import warehouse.domain.{Supplier, Warehouse}
 
 import scala.concurrent.duration._
 
@@ -43,10 +43,6 @@ class SupplierActor extends Actor with PersistentActor with ActorSharding with A
   override def receiveCommand: Receive = {
     case cmd: SupplierCmd =>
       cmd.applyTo(state) match {
-        /*case Right(Some(event@Supplier.Created(_, warehouseId))) =>
-          context.become(afterWarehouseCheck(sender, event))
-          val future = warehouseRegion ? Warehouse.GetWarehouse(warehouseId)
-          future pipeTo self*/
         case Right(Some(event: ObtainedSupplier)) =>
           println("SU RECEIVE CMD ObtainedSupplier", cmd, state)
           sender() ! event.applyTo(state)
@@ -57,21 +53,6 @@ class SupplierActor extends Actor with PersistentActor with ActorSharding with A
           println(cmd, error)
           sender() ! error
       }
-  }
-
-  private def afterWarehouseCheck(sender: ActorRef, event: SupplierEvt): Receive = {
-    case _: Warehouse =>
-      persistEvent(event, sender)
-      context.unbecome()
-      unstashAll()
-    case error: String =>
-      context.unbecome()
-      sender ! error
-      unstashAll()
-    case unknown =>
-      context.unbecome()
-      sender ! "Error afterWarehouseCheck"
-      unstashAll()
   }
 
   private def persistEvent(event: SupplierEvt, actor: ActorRef): Unit = {
