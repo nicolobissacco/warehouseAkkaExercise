@@ -46,11 +46,15 @@ object Warehouse {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
       println("WA CMD AddProduct applyTo", domainEntity.warehouseId, warehouseId)
       if (warehouseId == domainEntity.warehouseId) {
-        if (!domainEntity.products.exists(_.productId == productId)) {
-          Right(Some(AddedProduct(warehouseId, supplierId, productId)))
+        if (domainEntity.products.exists(_.productId == productId)) {
+          val findElem = domainEntity.products.find(x => x.productId == productId && x.supplierId == supplierId)
+          findElem match {
+            case Some(_: Product) => Left("Product already in warehouse for supplier")
+            case _ => Right(Some(AddedProduct(warehouseId, supplierId, productId)))
+          }
         }
         else {
-          Left("Product already in warehouse")
+          Right(Some(AddedProduct(warehouseId, supplierId, productId)))
         }
       } else {
         Left("Wrong warehouse")
@@ -73,12 +77,11 @@ object Warehouse {
       println("WA CMD RemoveProduct applyTo", domainEntity.warehouseId, warehouseId)
       if (warehouseId == domainEntity.warehouseId) {
         if (domainEntity.products.exists(_.productId == productId)) {
-          val prodOfSupl = domainEntity.products.find(_.supplierId == supplierId)
+          val prodOfSupl = domainEntity.products.find(x => x.productId == productId && x.supplierId == supplierId)
           prodOfSupl match {
-            case Some(product: Product) => Right(Option(RemovedProduct(warehouseId, supplierId, productId)))
+            case Some(_: Product) => Right(Option(RemovedProduct(warehouseId, supplierId, productId)))
             case _ => Left("No product found for supplier")
           }
-
         }
         else {
           Left("No product found")
@@ -92,7 +95,7 @@ object Warehouse {
   case class RemovedProduct(warehouseId: String, supplierId: String, productId: String) extends WarehouseEvt {
     override def applyTo(domainEntity: Warehouse): Warehouse = {
       println("WA EVT RemovedProduct applyTo", domainEntity.warehouseId, warehouseId)
-      domainEntity.copy(products = domainEntity.products.filter(_.productId != productId))
+      domainEntity.copy(products = domainEntity.products.filter(x => !(x.productId == productId && x.supplierId == supplierId)))
     }
   }
 
