@@ -68,12 +68,17 @@ object Warehouse {
   implicit val dRemoveProduct: Decoder[RemoveProduct] = deriveDecoder[RemoveProduct]
   implicit val eRemoveProduct: Encoder[RemoveProduct] = deriveEncoder[RemoveProduct]
 
-  case class RemoveProduct(warehouseId: String, productId: String) extends WarehouseCmd {
+  case class RemoveProduct(warehouseId: String, supplierId: String, productId: String) extends WarehouseCmd {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
       println("WA CMD RemoveProduct applyTo", domainEntity.warehouseId, warehouseId)
       if (warehouseId == domainEntity.warehouseId) {
         if (domainEntity.products.exists(_.productId == productId)) {
-          Right(Option(RemovedProduct(warehouseId, productId)))
+          val prodOfSupl = domainEntity.products.find(_.supplierId == supplierId)
+          prodOfSupl match {
+            case Some(product: Product) => Right(Option(RemovedProduct(warehouseId, supplierId, productId)))
+            case _ => Left("No product found for supplier")
+          }
+
         }
         else {
           Left("No product found")
@@ -84,7 +89,7 @@ object Warehouse {
     }
   }
 
-  case class RemovedProduct(warehouseId: String, productId: String) extends WarehouseEvt {
+  case class RemovedProduct(warehouseId: String, supplierId: String, productId: String) extends WarehouseEvt {
     override def applyTo(domainEntity: Warehouse): Warehouse = {
       println("WA EVT RemovedProduct applyTo", domainEntity.warehouseId, warehouseId)
       domainEntity.copy(products = domainEntity.products.filter(_.productId != productId))

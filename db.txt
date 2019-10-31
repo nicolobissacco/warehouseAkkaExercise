@@ -1,0 +1,11 @@
+Created(eu) 8d6e72c0-fbbc-11e9-9854-f5d79dc5a4ec
+Created(us) 9195fc60-fbbc-11e9-9854-f5d79dc5a4ec
+Created(sup1) 9b2530c0-fbbc-11e9-9854-f5d79dc5a4ec
+Created(sup2) 9dbb6c00-fbbc-11e9-9854-f5d79dc5a4ec
+Created(cust1) a0747180-fbbc-11e9-9854-f5d79dc5a4ec
+Created(cust2) a327aaa0-fbbc-11e9-9854-f5d79dc5a4ec
+AddedProduct(eu,sup1,prod1) bbf352a0-fbbc-11e9-9854-f5d79dc5a4ec
+AddedProduct(us,sup1,prod1) c55eab50-fbbc-11e9-9854-f5d79dc5a4ec
+AddedProduct(eu,sup2,prod2) cfb7e670-fbbc-11e9-9854-f5d79dc5a4ec
+RemovedProduct(eu,prod1) 043a6f80-fbbd-11e9-9854-f5d79dc5a4ec
+RemovedProduct(us,prod1) 0a8fae90-fbbd-11e9-9854-f5d79dc5a4ec
