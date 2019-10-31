@@ -138,17 +138,22 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
         entity(as[Warehouse.GetWarehouse])(warehouseRequest)
       }
     },
+    path("addProduct") {
+      post {
+        entity(as[Warehouse.AddProduct])(warehouseRequest)
+      }
+    },
+    path("removeProduct") {
+      post {
+        entity(as[Warehouse.RemoveProduct])(warehouseRequest)
+      }
+    },
 
     path("createSupplier") {
       post {
         entity(as[Supplier.Create])(supplierRequest)
       }
     },
-    /*path("addProduct") {
-      post {
-        entity(as[Warehouse.AddProduct])(warehouseRequest)
-      }
-    },*/
     path("getSupplier") {
       post {
         entity(as[Supplier.GetSupplier])(supplierRequest)
@@ -160,11 +165,6 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
         entity(as[Customer.Create])(customerRequest)
       }
     },
-    /*path("removeProduct") {
-      post {
-        entity(as[Warehouse.RemoveProduct])(warehouseRequest)
-      }
-    },*/
     path("getCustomer") {
       post {
         entity(as[Customer.GetCustomer])(customerRequest)
