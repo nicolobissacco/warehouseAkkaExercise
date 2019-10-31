@@ -1,5 +1,6 @@
 package warehouse.domain
 
+import akka.actor.ActorRef
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
 import warehouse.domain.Domain.{DomainCommand, DomainEntity, DomainEvent}
@@ -39,10 +40,7 @@ object Warehouse {
     }
   }
 
-  implicit val dAddProduct: Decoder[AddProduct] = deriveDecoder[AddProduct]
-  implicit val eAddProduct: Encoder[AddProduct] = deriveEncoder[AddProduct]
-
-  case class AddProduct(warehouseId: String, supplierId: String, productId: String) extends WarehouseCmd {
+  case class AddProduct(warehouseId: String, supplierId: String, productId: String, actor: ActorRef) extends WarehouseCmd {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
       println("WA CMD AddProduct applyTo", domainEntity.warehouseId, warehouseId)
       if (warehouseId == domainEntity.warehouseId) {

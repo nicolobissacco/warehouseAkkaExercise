@@ -58,4 +58,27 @@ object Supplier {
       domainEntity
     }
   }
+
+  implicit val dAddProduct: Decoder[AddProduct] = deriveDecoder[AddProduct]
+  implicit val eAddProduct: Encoder[AddProduct] = deriveEncoder[AddProduct]
+
+  case class AddProduct(supplierId: String, warehouseId: String, productId: String) extends SupplierCmd {
+    override def applyTo(domainEntity: Supplier): Either[String, Option[SupplierEvt]] = {
+      println("SU CMD AddProduct applyTo", domainEntity.supplierId, supplierId)
+      if (domainEntity.supplierId == supplierId) {
+        Right(Some(AddedProduct(supplierId, warehouseId, productId)))
+      }
+      else {
+        Left("Supplier not found")
+      }
+    }
+  }
+
+  case class AddedProduct(supplierId: String, warehouseId: String, productId: String) extends SupplierEvt {
+    override def applyTo(domainEntity: Supplier): Supplier = {
+      println("SU EVT AddedProduct applyTo", domainEntity.supplierId, supplierId)
+      domainEntity
+    }
+  }
+
 }

@@ -6,8 +6,10 @@ import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 import akka.util.Timeout
 import warehouse.AppConfig
-import warehouse.domain.Supplier
+import warehouse.actors.Message
+import warehouse.actors.Message.{ProductMessageDone, ProductMessageError}
 import warehouse.domain.Supplier.{ObtainedSupplier, SupplierCmd, SupplierEvt}
+import warehouse.domain.{Supplier, Warehouse}
 
 import scala.concurrent.duration._
 
@@ -43,16 +45,22 @@ class SupplierActor extends Actor with PersistentActor with ActorSharding with A
   override def receiveCommand: Receive = {
     case cmd: SupplierCmd =>
       cmd.applyTo(state) match {
+        case Right(Some(Supplier.AddedProduct(supplierId, warehouseId, productId))) =>
+          warehouseRegion ! Warehouse.AddProduct(warehouseId, supplierId, productId, sender())
         case Right(Some(event: ObtainedSupplier)) =>
           println("SU RECEIVE CMD ObtainedSupplier", cmd, state)
           sender() ! event.applyTo(state)
         case Right(Some(event)) =>
-          persistEvent(event)
+          persistEvent(event, sender())
         case Right(None) => sender() ! Done
         case Left(error) =>
           println(cmd, error)
           sender() ! error
       }
+    case msg: ProductMessageDone =>
+      msg.actor ! Done
+    case msg: ProductMessageError =>
+      msg.actor ! msg.msg
   }
 
   private def persistEvent(event: SupplierEvt, actor: ActorRef): Unit = {
@@ -64,10 +72,6 @@ class SupplierActor extends Actor with PersistentActor with ActorSharding with A
       println("SU PERSIST", event, state)
       actor ! Done
     }
-  }
-
-  private def persistEvent(event: SupplierEvt): Unit = {
-    persistEvent(event, sender())
   }
 }
 

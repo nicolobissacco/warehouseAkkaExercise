@@ -1,16 +1,15 @@
 package warehouse.actors.write
 
 import akka.Done
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, ReceiveTimeout}
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props, ReceiveTimeout}
 import akka.cluster.sharding.ShardRegion
-import akka.pattern.{ask, pipe}
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 import akka.util.Timeout
 import warehouse.AppConfig
+import warehouse.actors.Message.{ProductMessageDone, ProductMessageError}
+import warehouse.domain.Warehouse
 import warehouse.domain.Warehouse.{ObtainedWarehouse, WarehouseCmd, WarehouseEvt}
-import warehouse.domain.{Supplier, Warehouse}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class WarehouseActor extends Actor with PersistentActor with ActorSharding with ActorLogging {
@@ -43,17 +42,22 @@ class WarehouseActor extends Actor with PersistentActor with ActorSharding with 
   }
 
   override def receiveCommand: Receive = {
+    case cmd: Warehouse.AddProduct =>
+      cmd.applyTo(state) match {
+        case Right(Some(event)) =>
+          persistEvent(event, ProductMessageDone(cmd.actor))
+        case Right(None) => sender() ! ProductMessageDone(cmd.actor)
+        case Left(error) =>
+          println(cmd, error)
+          sender() ! ProductMessageError(cmd.actor, error)
+      }
     case cmd: Warehouse.WarehouseCmd =>
       cmd.applyTo(state) match {
-        case Right(Some(event@Warehouse.AddedProduct(_, supplierId, _))) =>
-          context.become(supplierCheck(sender, event))
-          val future = supplierRegion ? Supplier.GetSupplier(supplierId)
-          future pipeTo self
         case Right(Some(event: ObtainedWarehouse)) =>
           println("WA RECEIVE CMD ObtainedWarehouse", cmd, state)
           sender() ! event.applyTo(state)
         case Right(Some(event)) =>
-          persistEvent(event, sender())
+          persistEvent(event)
         case Right(None) => sender() ! Done
         case Left(error) =>
           println(cmd, error)
@@ -61,30 +65,26 @@ class WarehouseActor extends Actor with PersistentActor with ActorSharding with 
       }
   }
 
-  private def persistEvent(event: WarehouseEvt, actor: ActorRef): Unit = {
+  private def commonPersistEvent(event: WarehouseEvt): Unit = {
+    state = update(state, event)
+    if (lastSequenceNr != 0 && lastSequenceNr % snapShotInterval == 0) {
+      saveSnapshot(state)
+    }
+    println("WA PERSIST", event, state)
+  }
+
+  private def persistEvent(event: WarehouseEvt): Unit = {
     persist(event) { _ =>
-      state = update(state, event)
-      if (lastSequenceNr != 0 && lastSequenceNr % snapShotInterval == 0) {
-        saveSnapshot(state)
-      }
-      println("WA PERSIST", event, state)
-      actor ! Done
+      commonPersistEvent(event)
+      sender() ! Done
     }
   }
 
-  private def supplierCheck(sender: ActorRef, event: WarehouseEvt): Receive = {
-    case _: Supplier =>
-      persistEvent(event, sender)
-      context.unbecome()
-      unstashAll()
-    case error: String =>
-      context.unbecome()
-      sender ! error
-      unstashAll()
-    case unknown =>
-      context.unbecome()
-      sender ! "Error supplierCheck"
-      unstashAll()
+  private def persistEvent(event: WarehouseEvt, msg: ProductMessageDone): Unit = {
+    persist(event) { _ =>
+      commonPersistEvent(event)
+      sender() ! msg
+    }
   }
 }
 
