@@ -6,8 +6,6 @@ import akka.cluster.sharding.ShardRegion
 import akka.persistence.{PersistentActor, RecoveryCompleted, SnapshotOffer}
 import akka.util.Timeout
 import warehouse.AppConfig
-import warehouse.actors.Message
-import warehouse.actors.Message.{ProductMessageDone, ProductMessageError}
 import warehouse.domain.Supplier.{ObtainedSupplier, SupplierCmd, SupplierEvt}
 import warehouse.domain.{Supplier, Warehouse}
 
@@ -46,7 +44,7 @@ class SupplierActor extends Actor with PersistentActor with ActorSharding with A
     case cmd: SupplierCmd =>
       cmd.applyTo(state) match {
         case Right(Some(Supplier.AddedProduct(supplierId, warehouseId, productId))) =>
-          warehouseRegion ! Warehouse.AddProduct(warehouseId, supplierId, productId, sender())
+          warehouseRegion forward Warehouse.AddProduct(warehouseId, supplierId, productId)
         case Right(Some(event: ObtainedSupplier)) =>
           println("SU RECEIVE CMD ObtainedSupplier", cmd, state)
           sender() ! event.applyTo(state)
@@ -57,10 +55,6 @@ class SupplierActor extends Actor with PersistentActor with ActorSharding with A
           println(cmd, error)
           sender() ! error
       }
-    case msg: ProductMessageDone =>
-      msg.actor ! Done
-    case msg: ProductMessageError =>
-      msg.actor ! msg.msg
   }
 
   private def persistEvent(event: SupplierEvt, actor: ActorRef): Unit = {

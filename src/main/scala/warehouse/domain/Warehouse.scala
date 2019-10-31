@@ -40,7 +40,7 @@ object Warehouse {
     }
   }
 
-  case class AddProduct(warehouseId: String, supplierId: String, productId: String, actor: ActorRef) extends WarehouseCmd {
+  case class AddProduct(warehouseId: String, supplierId: String, productId: String) extends WarehouseCmd {
     override def applyTo(domainEntity: Warehouse): Either[String, Option[WarehouseEvt]] = {
       println("WA CMD AddProduct applyTo", domainEntity.warehouseId, warehouseId)
       if (warehouseId == domainEntity.warehouseId) {

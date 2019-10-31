@@ -42,15 +42,6 @@ class WarehouseActor extends Actor with PersistentActor with ActorSharding with 
   }
 
   override def receiveCommand: Receive = {
-    case cmd: Warehouse.AddProduct =>
-      cmd.applyTo(state) match {
-        case Right(Some(event)) =>
-          persistEvent(event, ProductMessageDone(cmd.actor))
-        case Right(None) => sender() ! ProductMessageDone(cmd.actor)
-        case Left(error) =>
-          println(cmd, error)
-          sender() ! ProductMessageError(cmd.actor, error)
-      }
     case cmd: Warehouse.WarehouseCmd =>
       cmd.applyTo(state) match {
         case Right(Some(event: ObtainedWarehouse)) =>

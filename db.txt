@@ -46,3 +46,8 @@ Created(sup2) af1005e0-fbeb-11e9-944f-7d5cecc8e01d
 AddedProduct(eu,sup1,prod1) bc0aedf0-fbeb-11e9-944f-7d5cecc8e01d
 AddedProduct(eu,sup2,prod1) da2bf130-fbeb-11e9-944f-7d5cecc8e01d
 RemovedProduct(eu,sup1,prod1) f8be53e2-fbeb-11e9-944f-7d5cecc8e01d
+Created(us) fddbab00-fbf2-11e9-8f3e-55f5e5a765a4
+Created(eu) fff981f0-fbf2-11e9-8f3e-55f5e5a765a4
+Created(sup1) 0cbe8cf0-fbf3-11e9-8f3e-55f5e5a765a4
+Created(sup2) 26190770-fbf3-11e9-8f3e-55f5e5a765a4
+AddedProduct(eu,sup1,prod1) 41309b40-fbf3-11e9-8f3e-55f5e5a765a4
