@@ -34,53 +34,10 @@ class WarehouseActorTest
   }
 
   "WarehouseActor" must {
-    "perform commands" in {
+    "perform create commands" in {
       cluster ! Warehouse.Create("test")
       expectMsg(10 seconds, Done)
 
-      cluster ! Warehouse.AddProduct("test", "prod1")
-      expectMsg(10 seconds, Done)
-
-      cluster ! Warehouse.RemoveProduct("test", "prod1")
-      expectMsg(10 seconds, Done)
-    }
-  }
-
-  "Add and Remove product commands" must {
-    "be executed by the correct warehouse" in {
-      cluster ! Warehouse.AddProduct("random", "prod1")
-      expectMsg(10 seconds, "Wrong warehouse")
-
-      cluster ! Warehouse.RemoveProduct("name", "prod1")
-      expectMsg(10 seconds, "Wrong warehouse")
-    }
-  }
-
-  "Remove product command" must {
-    "be executed by the correct product" in {
-      cluster ! Warehouse.Create("test")
-      expectMsg(10 seconds, Done)
-
-      cluster ! Warehouse.AddProduct("test", "prod1")
-      expectMsg(10 seconds, Done)
-
-      cluster ! Warehouse.RemoveProduct("test", "prod2")
-      expectMsg(10 seconds, "No product found")
-    }
-  }
-
-  "A create command" must {
-    "do nothing if warehouse already exists" in {
-      cluster ! Warehouse.Create("test")
-      expectMsg(10 seconds, Done)
-
-      cluster ! Warehouse.Create("test")
-      expectMsg(10 seconds, Done)
-    }
-  }
-
-  "A create command" must {
-    "create another warehouse if the id is different" in {
       cluster ! Warehouse.Create("test")
       expectMsg(10 seconds, Done)
 
@@ -89,4 +46,47 @@ class WarehouseActorTest
     }
   }
 
+  "WarehouseActor" must {
+    "perform addProduct commands" in {
+      cluster ! Warehouse.Create("test3")
+      expectMsg(10 seconds, Done)
+
+      cluster ! Warehouse.AddProduct("test3", "sup1", "prod1")
+      expectMsg(10 seconds, Done)
+
+      cluster ! Warehouse.AddProduct("test3", "sup2", "prod1")
+      expectMsg(10 seconds, Done)
+
+      cluster ! Warehouse.AddProduct("random", "sup1", "prod1")
+      expectMsg(10 seconds, "Wrong warehouse")
+
+      cluster ! Warehouse.AddProduct("test3", "sup1", "prod1")
+      expectMsg(10 seconds, "Product already in warehouse for supplier")
+    }
+  }
+
+  "WarehouseActor" must {
+    "perform removeProduct commands" in {
+      cluster ! Warehouse.Create("test4")
+      expectMsg(10 seconds, Done)
+
+      cluster ! Warehouse.AddProduct("test4", "sup1", "prod1")
+      expectMsg(10 seconds, Done)
+
+      cluster ! Warehouse.AddProduct("test4", "sup2", "prod1")
+      expectMsg(10 seconds, Done)
+
+      cluster ! Warehouse.RemoveProduct("test4", "sup1", "prod1")
+      expectMsg(10 seconds, Done)
+
+      cluster ! Warehouse.RemoveProduct("random", "sup1", "prod1")
+      expectMsg(10 seconds, "Wrong warehouse")
+
+      cluster ! Warehouse.RemoveProduct("test4", "sup1", "prod3")
+      expectMsg(10 seconds, "No product found")
+
+      cluster ! Warehouse.RemoveProduct("test4", "sup1", "prod1")
+      expectMsg(10 seconds, "No product found for supplier")
+    }
+  }
 }

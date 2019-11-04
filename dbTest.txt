@@ -1,0 +1,9 @@
+Created(test) 500120b0-fef3-11e9-aee3-e9435a127f49
+AddedProduct(test,sup1,prod1) 500120b0-fef3-11e9-aee3-e9435a127f49
+AddedProduct(test,sup1,prod2) 500120b0-fef3-11e9-aee3-e9435a127f49
+RemovedProduct(test,sup1,prod2) 500120b0-fef3-11e9-aee3-e9435a127f49
+Created(test) 500120b0-fef3-11e9-aee3-e9435a127f49
+Created(sup1) 573cef30-fef3-11e9-9580-e9435a127f49
+AddedProduct(sup1,test,prod1) 573cef30-fef3-11e9-9580-e9435a127f49
+AddedProduct(sup1,test,prod2) 573cef30-fef3-11e9-9580-e9435a127f49
+Created(test) 573cef30-fef3-11e9-9580-e9435a127f49

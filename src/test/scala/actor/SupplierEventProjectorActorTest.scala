@@ -9,13 +9,13 @@ import akka.testkit.{DefaultTimeout, ImplicitSender, TestKit}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{BeforeAndAfterAll, Inside, Matchers}
 import warehouse.AppConfig
-import warehouse.actors.projector.WarehouseEventProjectorActor
-import warehouse.actors.projector.export.WarehouseLogExporter
-import warehouse.actors.write.WarehouseActor
-import warehouse.domain.Warehouse
-import warehouse.domain.Warehouse.WarehouseEvt
+import warehouse.actors.projector.SupplierEventProjectorActor
+import warehouse.actors.projector.export.SupplierLogExporter
+import warehouse.actors.write.{SupplierActor, WarehouseActor}
+import warehouse.domain.Supplier.SupplierEvt
+import warehouse.domain.{Supplier, Warehouse}
 
-class WarehouseEventProjectorActorTest
+class SupplierEventProjectorActorTest
   extends TestKit(ActorSystem(AppConfig.serviceName))
     with DefaultTimeout
     with ImplicitSender
@@ -28,14 +28,22 @@ class WarehouseEventProjectorActorTest
   val offsetFilePath = AppConfig.offsetFilePathTest
   val projector = system.actorOf(
     ClusterSingletonManager.props(
-      singletonProps = WarehouseEventProjectorActor.props(new WarehouseLogExporter(dbFilePath, offsetFilePath)),
+      singletonProps = SupplierEventProjectorActor.props(new SupplierLogExporter(dbFilePath, offsetFilePath)),
       terminationMessage = PoisonPill,
       settings = ClusterSingletonManagerSettings(system)
     ),
-    WarehouseEventProjectorActor.name
+    SupplierEventProjectorActor.name
   )
 
   val cluster = ClusterSharding(system).start(
+    typeName = SupplierActor.actorName,
+    entityProps = SupplierActor.props,
+    settings = ClusterShardingSettings(system),
+    extractEntityId = SupplierActor.extractEntityId,
+    extractShardId = SupplierActor.extractShardId
+  )
+
+  val clusterWa = ClusterSharding(system).start(
     typeName = WarehouseActor.actorName,
     entityProps = WarehouseActor.props,
     settings = ClusterShardingSettings(system),
@@ -52,13 +60,13 @@ class WarehouseEventProjectorActorTest
   "projection" when {
     "some events are received" should {
       "generate updates" in {
-        val event1 = Warehouse.Created("test")
-        val event2 = Warehouse.AddedProduct("test", "sup1", "prod1")
-        val event3 = Warehouse.AddedProduct("test", "sup1", "prod2")
-        val event4 = Warehouse.RemovedProduct("test", "sup1", "prod2")
-        val events: Seq[WarehouseEvt] = Seq(event1, event2, event3, event4)
+        Warehouse.Created("test")
+        val event1_1 = Supplier.Created("sup1")
+        val event2 = Supplier.AddedProduct("sup1", "test", "prod1")
+        val event3 = Supplier.AddedProduct("sup1", "test", "prod2")
+        val events: Seq[SupplierEvt] = Seq(event1_1, event2, event3)
 
-        val indexer = new WarehouseLogExporter(dbFilePath, offsetFilePath)
+        val indexer = new SupplierLogExporter(dbFilePath, offsetFilePath)
         val esRequests =
           indexer.indexEvents(events, timeBasedUUID)
         esRequests should be(Right(timeBasedUUID))
@@ -69,8 +77,8 @@ class WarehouseEventProjectorActorTest
   "projectior" when {
     "some events are received" should {
       "generate updates" in {
-        val event = Warehouse.Created("test")
-        val indexer = new WarehouseLogExporter(dbFilePath, offsetFilePath)
+        val event = Supplier.Created("test")
+        val indexer = new SupplierLogExporter(dbFilePath, offsetFilePath)
         val esRequests = indexer.project(event, timeBasedUUID)
         esRequests should be(Right(timeBasedUUID))
       }
@@ -80,7 +88,7 @@ class WarehouseEventProjectorActorTest
   "offset writer" when {
     "some offsets are received" should {
       "generate updates" in {
-        val indexer = new WarehouseLogExporter(dbFilePath, offsetFilePath)
+        val indexer = new SupplierLogExporter(dbFilePath, offsetFilePath)
         val esRequests = indexer.writeOffset(timeBasedUUID)
         esRequests should be(Right(timeBasedUUID))
       }
@@ -90,7 +98,7 @@ class WarehouseEventProjectorActorTest
   "offset reader" when {
     "some offset requests are received" should {
       "read latest indexed offset from file" in {
-        val indexer = new WarehouseLogExporter(dbFilePath, offsetFilePath)
+        val indexer = new SupplierLogExporter(dbFilePath, offsetFilePath)
         val esRequests = indexer.readOffset()
         esRequests should be(Some(timeBasedUUID))
       }

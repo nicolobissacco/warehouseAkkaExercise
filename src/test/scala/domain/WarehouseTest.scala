@@ -1,11 +1,11 @@
 package domain
 
 import org.scalatest.FunSuite
-import warehouse.domain.Warehouse
+import warehouse.domain.{Product, Warehouse}
 
 class WarehouseTest extends FunSuite {
 
-  def warehouseForTest(warehouseId: String, products: List[String] = List.empty[String]): Warehouse = Warehouse(warehouseId, products)
+  def warehouseForTest(warehouseId: String, products: List[Product] = List.empty[Product]): Warehouse = Warehouse(warehouseId, products)
 
   test("Create warehouse with non empty state and wrong id") {
     val warehouse = warehouseForTest("test")
@@ -41,7 +41,7 @@ class WarehouseTest extends FunSuite {
     val warehouse = warehouseForTest("test")
     val product = "prod1"
     val action: Either[String, Option[Warehouse.WarehouseEvt]] =
-      Warehouse.AddProduct("wrongId", product).applyTo(warehouse)
+      Warehouse.AddProduct("wrongId", "sup1", product).applyTo(warehouse)
     assert(action.isLeft)
     assert(action.left.get equals "Wrong warehouse")
   }
@@ -50,7 +50,7 @@ class WarehouseTest extends FunSuite {
     val warehouse = warehouseForTest("test")
     val product = "prod1"
     val action: Either[String, Option[Warehouse.WarehouseEvt]] =
-      Warehouse.AddProduct(warehouse.warehouseId, product).applyTo(warehouse)
+      Warehouse.AddProduct(warehouse.warehouseId, "sup1", product).applyTo(warehouse)
     assert(action.isRight)
     val event = action.right.get.get
     val applyResult = event.applyTo(warehouse)
@@ -58,21 +58,51 @@ class WarehouseTest extends FunSuite {
     assert(applyResult.products.length equals 1)
   }
 
-  // REMOVE PRODUCT
-  test("Remove product to warehouse with wrong id") {
-    val warehouse = warehouseForTest("test", List("prod1"))
+  test("Add product to warehouse with valid id, same supplier and same product") {
+    val warehouse = warehouseForTest("test", List(Product("prod1", "sup1")))
     val product = "prod1"
     val action: Either[String, Option[Warehouse.WarehouseEvt]] =
-      Warehouse.RemoveProduct("wrongId", product).applyTo(warehouse)
+      Warehouse.AddProduct(warehouse.warehouseId, "sup1", product).applyTo(warehouse)
+    assert(action.isLeft)
+    assert(action.left.get equals "Product already in warehouse for supplier")
+  }
+
+  test("Add product to warehouse with valid id, same supplier but different product") {
+    val warehouse = warehouseForTest("test", List(Product("prod1", "sup1")))
+    val product = "prod2"
+    val action: Either[String, Option[Warehouse.WarehouseEvt]] =
+      Warehouse.AddProduct(warehouse.warehouseId, "sup1", product).applyTo(warehouse)
+    assert(action.isRight)
+    val event = action.right.get.get
+    val applyResult = event.applyTo(warehouse)
+    assert(applyResult.warehouseId equals warehouse.warehouseId)
+    assert(applyResult.products.length equals 2)
+  }
+
+  // REMOVE PRODUCT
+  test("Remove product from warehouse with wrong id") {
+    val warehouse = warehouseForTest("test", List(Product("prod1", "sup1")))
+    val product = "prod1"
+    val action: Either[String, Option[Warehouse.WarehouseEvt]] =
+      Warehouse.RemoveProduct("wrongId", "sup1", product).applyTo(warehouse)
     assert(action.isLeft)
     assert(action.left.get equals "Wrong warehouse")
   }
 
-  test("Remove product to warehouse with valid id") {
-    val warehouse = warehouseForTest("test", List("prod1"))
+  test("Remove product from warehouse with invalid supplier id") {
+    val warehouse = warehouseForTest("test", List(Product("prod1", "sup1")))
     val product = "prod1"
     val action: Either[String, Option[Warehouse.WarehouseEvt]] =
-      Warehouse.RemoveProduct(warehouse.warehouseId, product).applyTo(warehouse)
+      Warehouse.RemoveProduct(warehouse.warehouseId, "sup2", product).applyTo(warehouse)
+    assert(action.isLeft)
+    assert(action.left.get equals "No product found for supplier")
+  }
+
+  test("Remove product from warehouse") {
+    val warehouse = warehouseForTest("test", List(Product("prod1", "sup1")))
+    val product = "prod1"
+    val action: Either[String, Option[Warehouse.WarehouseEvt]] =
+      Warehouse.RemoveProduct(warehouse.warehouseId, "sup1", product).applyTo(warehouse)
     assert(action.isRight)
     val event = action.right.get.get
     val applyResult = event.applyTo(warehouse)
@@ -80,11 +110,11 @@ class WarehouseTest extends FunSuite {
     assert(applyResult.products.isEmpty)
   }
 
-  test("Remove product to warehouse with valid id but not found") {
-    val warehouse = warehouseForTest("test", List("prod1"))
+  test("Remove product from warehouse with valid id but not found") {
+    val warehouse = warehouseForTest("test", List(Product("prod1", "sup1")))
     val product = "prod2"
     val action: Either[String, Option[Warehouse.WarehouseEvt]] =
-      Warehouse.RemoveProduct(warehouse.warehouseId, product).applyTo(warehouse)
+      Warehouse.RemoveProduct(warehouse.warehouseId, "sup1", product).applyTo(warehouse)
     assert(action.isLeft)
     assert(action.left.get equals "No product found")
   }
