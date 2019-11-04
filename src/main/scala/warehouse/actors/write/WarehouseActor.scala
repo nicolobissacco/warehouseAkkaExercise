@@ -56,25 +56,14 @@ class WarehouseActor extends Actor with PersistentActor with ActorSharding with 
       }
   }
 
-  private def commonPersistEvent(event: WarehouseEvt): Unit = {
-    state = update(state, event)
-    if (lastSequenceNr != 0 && lastSequenceNr % snapShotInterval == 0) {
-      saveSnapshot(state)
-    }
-    println("WA PERSIST", event, state)
-  }
-
   private def persistEvent(event: WarehouseEvt): Unit = {
     persist(event) { _ =>
-      commonPersistEvent(event)
+      state = update(state, event)
+      if (lastSequenceNr != 0 && lastSequenceNr % snapShotInterval == 0) {
+        saveSnapshot(state)
+      }
+      println("WA PERSIST", event, state)
       sender() ! Done
-    }
-  }
-
-  private def persistEvent(event: WarehouseEvt, msg: ProductMessageDone): Unit = {
-    persist(event) { _ =>
-      commonPersistEvent(event)
-      sender() ! msg
     }
   }
 }
