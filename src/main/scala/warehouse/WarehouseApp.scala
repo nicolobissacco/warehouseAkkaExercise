@@ -11,9 +11,13 @@ import akka.http.scaladsl.server.{HttpApp, Route}
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import akka.pattern.ask
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import warehouse.actors.ManagerActor
+import warehouse.actors.ManagerActor.{CreateWs, CreatedWs, SendWs}
 import warehouse.actors.projector.export.{SupplierLogExporter, WarehouseLogExporter}
 import warehouse.actors.projector.{SupplierEventProjectorActor, WarehouseEventProjectorActor}
 import warehouse.actors.write.{ActorSharding, SupplierActor, WarehouseActor}
@@ -26,6 +30,7 @@ import scala.concurrent.duration._
 
 object WarehouseApp extends HttpApp with ActorSharding with App {
   override implicit val system: ActorSystem = ActorSystem(AppConfig.serviceName, ConfigFactory.load())
+  implicit val am = ActorMaterializer()
 
   private implicit val scheduler: Scheduler = system.scheduler
 
@@ -87,6 +92,14 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
       extractEntityId = SupplierActor.extractEntityId,
       extractShardId = SupplierActor.extractShardId
     )
+
+    ClusterSharding(system).start(
+      typeName = ManagerActor.actorName,
+      entityProps = ManagerActor.props(),
+      settings = ClusterShardingSettings(system),
+      extractEntityId = ManagerActor.extractEntityId,
+      extractShardId = ManagerActor.extractShardId
+    )
   }
 
   private def createClusterSingletonActors(): Unit = {
@@ -139,6 +152,31 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
     path("addProduct") {
       post {
         entity(as[Supplier.AddProduct])(supplierRequest)
+      }
+    },
+
+    path("invia" / Segment / Segment) {
+      (id: String, txt: String) => {
+        managerRegion ! SendWs(id, txt)
+        complete(StatusCodes.OK)
+      }
+    },
+    path("register" / Segment) {
+      id: String => {
+        onSuccess(managerRegion ? CreateWs(id)) {
+          case CreatedWs(Some(ref)) => {
+            val source = ref.source
+            val flow = Flow.fromSinkAndSourceCoupledMat(Sink.ignore, source)(Keep.both)
+            handleWebSocketMessages(flow)
+          }
+          case CreatedWs(None) => {
+            println("WS GIA PRESENTE!!!")
+            complete(StatusCodes.OK)
+          }
+          case e =>
+            println("ECCEZIONE!!!")
+            complete(StatusCodes.BadRequest -> e.toString)
+        }
       }
     }
   )

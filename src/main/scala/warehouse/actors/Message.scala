@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 
 object Message {
 
-  trait ProductMessage
+  sealed trait ProductMessage
 
   case class ProductMessageDone(actor: ActorRef) extends ProductMessage
 
