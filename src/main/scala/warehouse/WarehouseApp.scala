@@ -16,10 +16,11 @@ import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import warehouse.actors.ManagerActor
-import warehouse.actors.ManagerActor.{CreateWs, CreatedWs, SendWs}
 import warehouse.actors.projector.export.{SupplierLogExporter, WarehouseLogExporter}
 import warehouse.actors.projector.{SupplierEventProjectorActor, WarehouseEventProjectorActor}
+import warehouse.actors.webSocket.WsConnectionActor.WsConnectionCreated
+import warehouse.actors.webSocket.WsManagerActor
+import warehouse.actors.webSocket.WsManagerActor.{CreateWsConnection, SendMessageWs}
 import warehouse.actors.write.{ActorSharding, SupplierActor, WarehouseActor}
 import warehouse.domain.Supplier.SupplierCmd
 import warehouse.domain.Warehouse.WarehouseCmd
@@ -94,11 +95,11 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
     )
 
     ClusterSharding(system).start(
-      typeName = ManagerActor.actorName,
-      entityProps = ManagerActor.props(),
+      typeName = WsManagerActor.actorName,
+      entityProps = WsManagerActor.props(),
       settings = ClusterShardingSettings(system),
-      extractEntityId = ManagerActor.extractEntityId,
-      extractShardId = ManagerActor.extractShardId
+      extractEntityId = WsManagerActor.extractEntityId,
+      extractShardId = WsManagerActor.extractShardId
     )
   }
 
@@ -109,7 +110,7 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
         terminationMessage = PoisonPill,
         settings = ClusterSingletonManagerSettings(system)
       ),
-      WarehouseEventProjectorActor.name
+      WarehouseEventProj\ectorActor.name
     )
 
     system.actorOf(
@@ -156,20 +157,20 @@ object WarehouseApp extends HttpApp with ActorSharding with App {
     },
 
     path("invia" / Segment / Segment) {
-      (id: String, txt: String) => {
-        managerRegion ! SendWs(id, txt)
+      (tenant: String, txt: String) => {
+        managerRegion ! SendMessageWs(tenant, txt)
         complete(StatusCodes.OK)
       }
     },
-    path("register" / Segment) {
-      id: String => {
-        onSuccess(managerRegion ? CreateWs(id)) {
-          case CreatedWs(Some(ref)) => {
+    path("register" / Segment / Segment) {
+      (tenant: String, id: String) => {
+        onSuccess(managerRegion ? CreateWsConnection(tenant, id)) {
+          case WsConnectionCreated(Some(ref)) => {
             val source = ref.source
             val flow = Flow.fromSinkAndSourceCoupledMat(Sink.ignore, source)(Keep.both)
             handleWebSocketMessages(flow)
           }
-          case CreatedWs(None) => {
+          case WsConnectionCreated(None) => {
             println("WS GIA PRESENTE!!!")
             complete(StatusCodes.OK)
           }
